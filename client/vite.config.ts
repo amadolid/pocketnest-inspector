@@ -14,11 +14,13 @@ export default defineConfig({
     },
   },
   build: {
-    minify: false,
+    minify: true,
     rollupOptions: {
       output: {
         manualChunks: undefined,
       },
     },
+    outDir: "../pocketnest",
   },
+  base: "./",
 });
