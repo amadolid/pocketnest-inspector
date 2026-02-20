@@ -1,21 +1,3 @@
-import { useState, useCallback } from "react";
-import {
-  Play,
-  ChevronDown,
-  ChevronRight,
-  CircleHelp,
-  Bug,
-  Github,
-  Eye,
-  EyeOff,
-  RotateCcw,
-  Settings,
-  HelpCircle,
-  RefreshCwOff,
-  Copy,
-  CheckCheck,
-  Server,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,21 +8,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { InspectorConfig } from "@/lib/configurationTypes";
+import { ConnectionStatus } from "@/lib/constants";
+import { CustomHeaders as CustomHeadersType } from "@/lib/types/customHeaders";
+import {
   LoggingLevel,
   LoggingLevelSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { InspectorConfig } from "@/lib/configurationTypes";
-import { ConnectionStatus } from "@/lib/constants";
-import useTheme from "../lib/hooks/useTheme";
-import { version } from "../../../package.json";
 import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import CustomHeaders from "./CustomHeaders";
-import { CustomHeaders as CustomHeadersType } from "@/lib/types/customHeaders";
+  Bug,
+  CheckCheck,
+  ChevronDown,
+  ChevronRight,
+  CircleHelp,
+  Copy,
+  Eye,
+  EyeOff,
+  Github,
+  HelpCircle,
+  Play,
+  RefreshCwOff,
+  RotateCcw,
+  Server,
+  Settings,
+} from "lucide-react";
+import { useCallback, useState } from "react";
+import useTheme from "../lib/hooks/useTheme";
 import { useToast } from "../lib/hooks/useToast";
+import CustomHeaders from "./CustomHeaders";
 import IconDisplay, { WithIcons } from "./IconDisplay";
 
 interface SidebarProps {
@@ -239,7 +238,7 @@ const Sidebar = ({
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-border">
         <div className="flex items-center">
           <h1 className="ml-2 text-lg font-semibold">
-            MCP Inspector v{version}
+            Pocketnest MCP Inspector
           </h1>
         </div>
       </div>
@@ -258,13 +257,14 @@ const Sidebar = ({
               onValueChange={(value: "stdio" | "sse" | "streamable-http") =>
                 setTransportType(value)
               }
+              disabled
             >
               <SelectTrigger id="transport-type-select">
                 <SelectValue placeholder="Select transport type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="stdio">STDIO</SelectItem>
                 <SelectItem value="sse">SSE</SelectItem>
+                <SelectItem value="stdio">STDIO</SelectItem>
                 <SelectItem value="streamable-http">Streamable HTTP</SelectItem>
               </SelectContent>
             </Select>
@@ -316,6 +316,7 @@ const Sidebar = ({
                         value={sseUrl}
                         onChange={(e) => setSseUrl(e.target.value)}
                         className="font-mono"
+                        disabled
                       />
                     </TooltipTrigger>
                     <TooltipContent>{sseUrl}</TooltipContent>
@@ -334,7 +335,7 @@ const Sidebar = ({
               {/* Connection Type switch - only visible for non-STDIO transport types */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="space-y-2">
+                  <div className="space-y-2" hidden>
                     <label
                       className="text-sm font-medium"
                       htmlFor="connection-type-select"
@@ -346,13 +347,14 @@ const Sidebar = ({
                       onValueChange={(value: "direct" | "proxy") =>
                         setConnectionType(value)
                       }
+                      disabled
                     >
                       <SelectTrigger id="connection-type-select">
                         <SelectValue placeholder="Select connection type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="proxy">Via Proxy</SelectItem>
                         <SelectItem value="direct">Direct</SelectItem>
+                        <SelectItem value="proxy">Via Proxy</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -488,7 +490,7 @@ const Sidebar = ({
           )}
 
           {/* Always show both copy buttons for all transport types */}
-          <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="grid grid-cols-2 gap-2 mt-2 hidden">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -553,7 +555,7 @@ const Sidebar = ({
                 </div>
                 {transportType !== "stdio" && (
                   // OAuth Configuration
-                  <div className="space-y-2 p-3  rounded border">
+                  <div className="space-y-2 p-3 rounded border hidden">
                     <h4 className="text-sm font-semibold flex items-center">
                       OAuth 2.0 Flow
                     </h4>

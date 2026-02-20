@@ -1,41 +1,35 @@
 import {
+  hasValidMetaName,
+  hasValidMetaPrefix,
+  isReservedMetaKey,
+} from "@/utils/metaUtils";
+import { getToolUiResourceUri } from "@modelcontextprotocol/ext-apps/app-bridge";
+import type {
+  AnySchema,
+  SchemaOutput,
+} from "@modelcontextprotocol/sdk/server/zod-compat.js";
+import { OAuthTokensSchema } from "@modelcontextprotocol/sdk/shared/auth.js";
+import {
   ClientRequest,
   CompatibilityCallToolResult,
   CompatibilityCallToolResultSchema,
   CreateMessageResult,
   EmptyResultSchema,
   GetPromptResultSchema,
+  GetTaskResultSchema,
   ListPromptsResultSchema,
   ListResourcesResultSchema,
   ListResourceTemplatesResultSchema,
   ListToolsResultSchema,
+  LoggingLevel,
   ReadResourceResultSchema,
   Resource,
   ResourceTemplate,
   Root,
   ServerNotification,
-  Tool,
-  LoggingLevel,
   Task,
-  GetTaskResultSchema,
+  Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import { OAuthTokensSchema } from "@modelcontextprotocol/sdk/shared/auth.js";
-import type {
-  AnySchema,
-  SchemaOutput,
-} from "@modelcontextprotocol/sdk/server/zod-compat.js";
-import { SESSION_KEYS, getServerSpecificKey } from "./lib/constants";
-import {
-  hasValidMetaName,
-  hasValidMetaPrefix,
-  isReservedMetaKey,
-} from "@/utils/metaUtils";
-import { getToolUiResourceUri } from "@modelcontextprotocol/ext-apps/app-bridge";
-import { AuthDebuggerState, EMPTY_DEBUGGER_STATE } from "./lib/auth-types";
-import { OAuthStateMachine } from "./lib/oauth-state-machine";
-import { cacheToolOutputSchemas } from "./utils/schemaUtils";
-import { cleanParams } from "./utils/paramUtils";
-import type { JsonSchemaType } from "./utils/jsonUtils";
 import React, {
   Suspense,
   useCallback,
@@ -43,14 +37,20 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { AuthDebuggerState, EMPTY_DEBUGGER_STATE } from "./lib/auth-types";
+import { getServerSpecificKey, SESSION_KEYS } from "./lib/constants";
 import { useConnection } from "./lib/hooks/useConnection";
 import {
   useDraggablePane,
   useDraggableSidebar,
 } from "./lib/hooks/useDraggablePane";
+import { OAuthStateMachine } from "./lib/oauth-state-machine";
+import type { JsonSchemaType } from "./utils/jsonUtils";
+import { cleanParams } from "./utils/paramUtils";
+import { cacheToolOutputSchemas } from "./utils/schemaUtils";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AppWindow,
   Bell,
@@ -66,39 +66,39 @@ import {
 
 import { z } from "zod";
 import "./App.css";
+import AppsTab from "./components/AppsTab";
 import AuthDebugger from "./components/AuthDebugger";
 import ConsoleTab from "./components/ConsoleTab";
+import ElicitationTab, {
+  ElicitationResponse,
+  PendingElicitationRequest,
+} from "./components/ElicitationTab";
 import HistoryAndNotifications from "./components/HistoryAndNotifications";
+import MetadataTab from "./components/MetadataTab";
 import PingTab from "./components/PingTab";
 import PromptsTab, { Prompt } from "./components/PromptsTab";
 import ResourcesTab from "./components/ResourcesTab";
 import RootsTab from "./components/RootsTab";
 import SamplingTab, { PendingRequest } from "./components/SamplingTab";
 import Sidebar from "./components/Sidebar";
-import ToolsTab from "./components/ToolsTab";
 import TasksTab from "./components/TasksTab";
-import AppsTab from "./components/AppsTab";
+import ToolsTab from "./components/ToolsTab";
 import { InspectorConfig } from "./lib/configurationTypes";
-import {
-  getMCPProxyAddress,
-  getMCPProxyAuthToken,
-  getInitialSseUrl,
-  getInitialTransportType,
-  getInitialCommand,
-  getInitialArgs,
-  initializeInspectorConfig,
-  saveInspectorConfig,
-  getMCPTaskTtl,
-} from "./utils/configUtils";
-import ElicitationTab, {
-  PendingElicitationRequest,
-  ElicitationResponse,
-} from "./components/ElicitationTab";
 import {
   CustomHeaders,
   migrateFromLegacyAuth,
 } from "./lib/types/customHeaders";
-import MetadataTab from "./components/MetadataTab";
+import {
+  getInitialArgs,
+  getInitialCommand,
+  getInitialSseUrl,
+  getInitialTransportType,
+  getMCPProxyAddress,
+  getMCPProxyAuthToken,
+  getMCPTaskTtl,
+  initializeInspectorConfig,
+  saveInspectorConfig,
+} from "./utils/configUtils";
 
 const CONFIG_LOCAL_STORAGE_KEY = "inspectorConfig_v1";
 
@@ -176,10 +176,13 @@ const App = () => {
   >(getInitialTransportType);
   const [connectionType, setConnectionType] = useState<"direct" | "proxy">(
     () => {
+      return "direct";
+      /* Force to use `direct`
       return (
         (localStorage.getItem("lastConnectionType") as "direct" | "proxy") ||
         "proxy"
       );
+      */
     },
   );
   const [logLevel, setLogLevel] = useState<LoggingLevel>("debug");
@@ -1674,20 +1677,15 @@ const App = () => {
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-4">
               <p className="text-lg text-gray-500 dark:text-gray-400">
-                Connect to an MCP server to start inspecting
+                Test Pocketnest MCP Server
               </p>
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground">
-                  Need to configure authentication?
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAuthDebuggerVisible(true)}
-                >
-                  Open Auth Settings
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => connectMcpServer()}
+              >
+                Connect
+              </Button>
             </div>
           )}
         </div>

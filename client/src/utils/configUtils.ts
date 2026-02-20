@@ -1,7 +1,7 @@
 import { InspectorConfig } from "@/lib/configurationTypes";
 import {
-  DEFAULT_MCP_PROXY_LISTEN_PORT,
   DEFAULT_INSPECTOR_CONFIG,
+  DEFAULT_MCP_PROXY_LISTEN_PORT,
 } from "@/lib/constants";
 
 const getSearchParam = (key: string): string | null => {
@@ -62,6 +62,8 @@ export const getInitialTransportType = ():
   | "stdio"
   | "sse"
   | "streamable-http" => {
+  return "sse";
+  /* Force to use SSE
   const param = getSearchParam("transport");
   if (param === "stdio" || param === "sse" || param === "streamable-http") {
     return param;
@@ -72,12 +74,17 @@ export const getInitialTransportType = ():
       | "sse"
       | "streamable-http") || "stdio"
   );
+  */
 };
 
 export const getInitialSseUrl = (): string => {
+  // return "http://localhost:8000/ai/sse";
+  return location.origin + "/ai/sse";
+  /* Force to use SSE endpoint
   const param = getSearchParam("serverUrl");
   if (param) return param;
   return localStorage.getItem("lastSseUrl") || "http://localhost:3001/sse";
+  */
 };
 
 export const getInitialCommand = (): string => {
